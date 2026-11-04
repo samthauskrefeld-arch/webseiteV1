@@ -1,0 +1,10 @@
+const base = process.env.DATABASE_URL ?? "postgresql://myminijob:myminijob@localhost:5432/myminijob";
+const url = new URL(base);
+url.pathname = `/${process.env.TEST_DATABASE_NAME ?? "myminijob_test"}`;
+process.env.DATABASE_URL = url.toString();
+(process.env as Record<string, string>).NODE_ENV = "test";
+process.env.APP_URL = "http://localhost:3000";
+process.env.STORAGE_DIR = "/tmp/mmj-test-storage";
+delete process.env.REDIS_URL;
+delete process.env.ANTHROPIC_API_KEY;
+delete process.env.SMTP_HOST;

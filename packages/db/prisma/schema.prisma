@@ -1,0 +1,803 @@
+// My Minijob – Datenmodell
+// Migrations are plain SQL in ./migrations (Prisma-compatible layout, applied by `pnpm db:migrate`).
+// Money is always stored as integer cents. All IDs are UUIDs.
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum RoleType {
+  APPLICANT
+  PRIVATE_POSTER
+  BUSINESS_POSTER
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
+enum TokenType {
+  EMAIL_VERIFY
+  PASSWORD_RESET
+}
+
+enum PosterType {
+  PRIVATE
+  BUSINESS
+}
+
+enum ListingStatus {
+  DRAFT
+  PUBLISHED
+  PAUSED
+  CLOSED
+  ARCHIVED
+}
+
+enum ListingCategory {
+  GARTEN
+  HAUSHALT
+  EINKAUF
+  NACHHILFE
+  EVENT
+  GASTRONOMIE
+  BUERO
+  HANDWERK
+  BETREUUNG
+  LOGISTIK
+  IT
+  SONSTIGES
+}
+
+enum EmploymentType {
+  MINIJOB
+  TEILZEIT
+  VOLLZEIT
+  BEFRISTET
+  EINMALIG
+  PROJEKT
+  AUSBILDUNG
+  PRAKTIKUM
+  WERKSTUDENT
+}
+
+enum PaymentMethod {
+  BANK_TRANSFER
+  PAYPAL
+  OTHER_CASHLESS
+}
+
+enum QualificationKind {
+  AUSBILDUNGSBERUF
+  BERUF
+  STUDIENFACH
+  MEISTER_FORTBILDUNG
+  ZERTIFIKAT
+}
+
+enum AliasKind {
+  SYNONYM
+  ABBREVIATION
+  SPELLING
+  COLLOQUIAL
+}
+
+enum RequirementType {
+  AUSBILDUNG
+  STUDIUM
+  MEISTER
+  ZERTIFIKAT
+  ERFAHRUNG
+  FAEHIGKEIT
+  SPRACHE
+  FUEHRERSCHEIN
+}
+
+enum RequirementLevel {
+  REQUIRED
+  PREFERRED
+}
+
+enum ClaimStatus {
+  SELF_DECLARED
+  PENDING_REVIEW
+  VERIFIED
+  REJECTED
+}
+
+enum ApplicationStatus {
+  submitted
+  viewed
+  shortlisted
+  accepted
+  rejected
+  withdrawn
+}
+
+enum MediationStatus {
+  PENDING_APPLICANT
+  CONFIRMED
+  DECLINED
+  EXPIRED
+  WITHDRAWN_BY_POSTER
+  CANCELLED
+  COMPLETED
+}
+
+enum InvoiceKind {
+  INVOICE
+  CANCELLATION
+}
+
+enum InvoiceStatus {
+  OPEN
+  PAID
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+}
+
+enum DisputeStatus {
+  OPEN
+  RESOLVED_REFUND
+  RESOLVED_REJECTED
+}
+
+enum VerificationStatus {
+  UNVERIFIED
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum ReviewStatus {
+  VISIBLE
+  HIDDEN
+}
+
+enum ReportTarget {
+  LISTING
+  USER
+  MESSAGE
+  REVIEW
+}
+
+enum ReportStatus {
+  OPEN
+  ACTIONED
+  DISMISSED
+}
+
+enum FilePurpose {
+  RESUME_DOC
+  QUALIFICATION_PROOF
+  CHAT_ATTACHMENT
+  INVOICE_PDF
+  BUSINESS_DOC
+}
+
+enum ScanStatus {
+  PENDING
+  CLEAN
+  INFECTED
+  NOT_SCANNED
+}
+
+model User {
+  id              String     @id @default(uuid()) @db.Uuid
+  email           String     @unique
+  passwordHash    String
+  emailVerifiedAt DateTime?
+  activeRole      RoleType   @default(APPLICANT)
+  status          UserStatus @default(ACTIVE)
+  deletedAt       DateTime?
+  isDemo          Boolean    @default(false)
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  roles            Role[]
+  sessions         Session[]
+  tokens           VerificationToken[]
+  profile          Profile?
+  resume           Resume?
+  businesses       Business[]
+  listings         Listing[]
+  applications     Application[]
+  files            UploadedFile[]
+  notifications    Notification[]
+  notificationPrefs NotificationPreference[]
+  pushSubscriptions PushSubscription[]
+  consents         Consent[]
+  participants     ConversationParticipant[]
+  messages         Message[]
+  reviewsWritten   Review[]   @relation("ReviewAuthor")
+  reviewsReceived  Review[]   @relation("ReviewSubject")
+  reports          Report[]   @relation("Reporter")
+  blocks           Block[]    @relation("Blocker")
+  blockedBy        Block[]    @relation("Blocked")
+  invoices         Invoice[]
+  billingAddress   BillingAddress?
+  aiUsage          AiUsage[]
+}
+
+model Role {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  type      RoleType
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, type])
+}
+
+model Session {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @db.Uuid
+  tokenHash  String   @unique
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  lastSeenAt DateTime @default(now())
+  userAgent  String?
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @db.Uuid
+  type      TokenType
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type])
+}
+
+model Profile {
+  userId             String   @id @db.Uuid
+  username           String   @unique
+  city               String?
+  postalCode         String?
+  lat                Float?
+  lng                Float?
+  about              String?
+  skills             String[]
+  languages          Json     @default("[]")
+  availability       String?
+  desiredHourlyCents Int?
+  /// field -> PUBLIC | APPLICATIONS | PRIVATE
+  visibility         Json     @default("{}")
+  updatedAt          DateTime @updatedAt
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Resume {
+  id             String                @id @default(uuid()) @db.Uuid
+  userId         String                @unique @db.Uuid
+  headline       String                @default("")
+  summary        String                @default("")
+  experience     Json                  @default("[]")
+  education      Json                  @default("[]")
+  updatedAt      DateTime              @updatedAt
+  user           User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  qualifications ResumeQualification[]
+}
+
+model ResumeQualification {
+  id              String        @id @default(uuid()) @db.Uuid
+  resumeId        String        @db.Uuid
+  qualificationId String        @db.Uuid
+  status          ClaimStatus   @default(SELF_DECLARED)
+  note            String        @default("")
+  documentFileId  String?       @db.Uuid
+  verifiedAt      DateTime?
+  verifiedById    String?       @db.Uuid
+  createdAt       DateTime      @default(now())
+  resume          Resume        @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  qualification   Qualification @relation(fields: [qualificationId], references: [id])
+  documentFile    UploadedFile? @relation(fields: [documentFileId], references: [id], onDelete: SetNull)
+
+  @@unique([resumeId, qualificationId])
+  @@index([qualificationId])
+}
+
+model Business {
+  id                 String             @id @default(uuid()) @db.Uuid
+  ownerId            String             @db.Uuid
+  name               String
+  legalForm          String?
+  street             String?
+  postalCode         String?
+  city               String?
+  vatId              String?
+  website            String?
+  description        String?
+  verificationStatus VerificationStatus @default(UNVERIFIED)
+  verifiedAt         DateTime?
+  verifiedById       String?            @db.Uuid
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  owner              User               @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  listings           Listing[]
+
+  @@index([ownerId])
+}
+
+model Qualification {
+  id             String                @id @default(uuid()) @db.Uuid
+  kind           QualificationKind
+  name           String
+  normalizedName String
+  officialCode   String?
+  source         String
+  sourceRef      String?
+  isOfficial     Boolean               @default(false)
+  active         Boolean               @default(true)
+  catalogVersion String
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+  aliases        QualificationAlias[]
+  requirements   ListingRequirement[]
+  resumeEntries  ResumeQualification[]
+
+  @@unique([kind, normalizedName])
+  @@index([active, kind])
+}
+
+model QualificationAlias {
+  id              String        @id @default(uuid()) @db.Uuid
+  qualificationId String        @db.Uuid
+  alias           String
+  normalizedAlias String
+  kind            AliasKind
+  createdById     String?       @db.Uuid
+  createdAt       DateTime      @default(now())
+  qualification   Qualification @relation(fields: [qualificationId], references: [id], onDelete: Cascade)
+
+  @@unique([qualificationId, normalizedAlias])
+}
+
+model CatalogImport {
+  id          String   @id @default(uuid()) @db.Uuid
+  version     String   @unique
+  source      String
+  license     String
+  recordCount Int
+  checksum    String
+  notes       String?
+  importedAt  DateTime @default(now())
+}
+
+/// Geo reference (seed dataset; replace with a licensed full dataset before go-live)
+model Place {
+  id             String  @id @default(uuid()) @db.Uuid
+  name           String
+  normalizedName String
+  postalCode     String?
+  state          String
+  lat            Float
+  lng            Float
+
+  @@index([normalizedName])
+  @@index([postalCode])
+}
+
+model Listing {
+  id                String             @id @default(uuid()) @db.Uuid
+  ownerId           String             @db.Uuid
+  businessId        String?            @db.Uuid
+  posterType        PosterType
+  status            ListingStatus      @default(DRAFT)
+  title             String
+  description       String
+  category          ListingCategory
+  employmentType    EmploymentType
+  remote            Boolean            @default(false)
+  city              String?
+  postalCode        String?
+  lat               Float?
+  lng               Float?
+  startDate         DateTime?          @db.Date
+  endDate           DateTime?          @db.Date
+  hoursPerWeek      Float?
+  hoursTotal        Float?
+  scheduleText      String?
+  weekend           Boolean            @default(false)
+  evening           Boolean            @default(false)
+  positions         Int
+  hourlyWageCents   Int
+  compensationNotes String?
+  paymentMethod     PaymentMethod
+  paymentNotes      String?
+  publishedAt       DateTime?
+  closedAt          DateTime?
+  /// Seed data for development/demo. Shown with a visible "Demo" badge.
+  isDemo            Boolean            @default(false)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  owner             User               @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  business          Business?          @relation(fields: [businessId], references: [id], onDelete: SetNull)
+  requirements      ListingRequirement[]
+  applications      Application[]
+  mediations        MediationEvent[]
+
+  @@index([status, publishedAt])
+  @@index([ownerId])
+  @@index([category])
+}
+
+model ListingRequirement {
+  id              String           @id @default(uuid()) @db.Uuid
+  listingId       String           @db.Uuid
+  type            RequirementType
+  level           RequirementLevel
+  qualificationId String?          @db.Uuid
+  text            String?
+  listing         Listing          @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  qualification   Qualification?   @relation(fields: [qualificationId], references: [id])
+
+  @@index([listingId])
+  @@index([qualificationId])
+}
+
+model Application {
+  id             String               @id @default(uuid()) @db.Uuid
+  listingId      String               @db.Uuid
+  applicantId    String               @db.Uuid
+  status         ApplicationStatus    @default(submitted)
+  message        String               @default("")
+  /// Snapshot of the resume at submission (respecting visibility settings)
+  resumeSnapshot Json
+  idempotencyKey String               @unique
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+  listing        Listing              @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  applicant      User                 @relation(fields: [applicantId], references: [id], onDelete: Cascade)
+  events         ApplicationEvent[]
+  documents      ApplicationDocument[]
+  mediation      MediationEvent?
+  conversation   Conversation?
+
+  @@unique([listingId, applicantId])
+  @@index([applicantId])
+  @@index([listingId, status])
+}
+
+model ApplicationDocument {
+  applicationId String       @db.Uuid
+  fileId        String       @db.Uuid
+  application   Application  @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  file          UploadedFile @relation(fields: [fileId], references: [id], onDelete: Cascade)
+
+  @@id([applicationId, fileId])
+}
+
+model ApplicationEvent {
+  id            String             @id @default(uuid()) @db.Uuid
+  applicationId String             @db.Uuid
+  actorId       String?            @db.Uuid
+  fromStatus    ApplicationStatus?
+  toStatus      ApplicationStatus
+  note          String?
+  createdAt     DateTime           @default(now())
+  application   Application        @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId, createdAt])
+}
+
+model MediationEvent {
+  id                  String          @id @default(uuid()) @db.Uuid
+  applicationId       String          @unique @db.Uuid
+  listingId           String          @db.Uuid
+  posterId            String          @db.Uuid
+  applicantId         String          @db.Uuid
+  status              MediationStatus @default(PENDING_APPLICANT)
+  feeCents            Int
+  idempotencyKey      String          @unique
+  feeNoticeVersion    String
+  feeAcknowledgedAt   DateTime
+  expiresAt           DateTime
+  confirmedAt         DateTime?
+  closedAt            DateTime?
+  cancelReason        String?
+  posterCompletedAt   DateTime?
+  applicantCompletedAt DateTime?
+  completedAt         DateTime?
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+  application         Application     @relation(fields: [applicationId], references: [id], onDelete: Restrict)
+  listing             Listing         @relation(fields: [listingId], references: [id], onDelete: Restrict)
+  invoices            Invoice[]
+  disputes            Dispute[]
+  reviews             Review[]
+
+  @@index([listingId, status])
+  @@index([posterId])
+  @@index([applicantId])
+}
+
+model InvoiceCounter {
+  year Int @id
+  last Int @default(0)
+}
+
+model BillingAddress {
+  userId     String   @id @db.Uuid
+  name       String
+  street     String
+  postalCode String
+  city       String
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Invoice {
+  id                String          @id @default(uuid()) @db.Uuid
+  number            String          @unique
+  kind              InvoiceKind     @default(INVOICE)
+  mediationEventId  String          @db.Uuid
+  recipientUserId   String          @db.Uuid
+  /// Snapshot of recipient name/address at issue time
+  recipient         Json
+  description       String
+  issueDate         DateTime        @db.Date
+  serviceDate       DateTime        @db.Date
+  dueDate           DateTime        @db.Date
+  netCents          Int
+  taxCents          Int
+  grossCents        Int
+  taxRateBp         Int
+  taxNote           String
+  status            InvoiceStatus   @default(OPEN)
+  isTest            Boolean         @default(false)
+  correctsInvoiceId String?         @unique @db.Uuid
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  mediationEvent    MediationEvent  @relation(fields: [mediationEventId], references: [id], onDelete: Restrict)
+  recipientUser     User            @relation(fields: [recipientUserId], references: [id], onDelete: Restrict)
+  corrects          Invoice?        @relation("InvoiceCorrection", fields: [correctsInvoiceId], references: [id])
+  correctedBy       Invoice?        @relation("InvoiceCorrection")
+  payments          Payment[]
+
+  @@unique([mediationEventId, kind])
+  @@index([recipientUserId, issueDate])
+}
+
+model Payment {
+  id             String        @id @default(uuid()) @db.Uuid
+  invoiceId      String        @db.Uuid
+  provider       String
+  providerRef    String?
+  amountCents    Int
+  status         PaymentStatus @default(PENDING)
+  idempotencyKey String        @unique
+  isTest         Boolean       @default(false)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  invoice        Invoice       @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+
+  @@index([invoiceId])
+}
+
+model Dispute {
+  id               String         @id @default(uuid()) @db.Uuid
+  mediationEventId String         @db.Uuid
+  openedById       String         @db.Uuid
+  reason           String
+  status           DisputeStatus  @default(OPEN)
+  resolution       String?
+  resolvedById     String?        @db.Uuid
+  resolvedAt       DateTime?
+  createdAt        DateTime       @default(now())
+  mediationEvent   MediationEvent @relation(fields: [mediationEventId], references: [id], onDelete: Restrict)
+
+  @@index([status])
+}
+
+model Conversation {
+  id            String                    @id @default(uuid()) @db.Uuid
+  applicationId String                    @unique @db.Uuid
+  createdAt     DateTime                  @default(now())
+  lastMessageAt DateTime                  @default(now())
+  application   Application               @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  participants  ConversationParticipant[]
+  messages      Message[]
+}
+
+model ConversationParticipant {
+  conversationId      String       @db.Uuid
+  userId              String       @db.Uuid
+  lastReadAt          DateTime?
+  shareReadReceipts   Boolean      @default(true)
+  conversation        Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user                User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([conversationId, userId])
+  @@index([userId])
+}
+
+model Message {
+  id               String        @id @default(uuid()) @db.Uuid
+  conversationId   String        @db.Uuid
+  senderId         String        @db.Uuid
+  body             String
+  attachmentFileId String?       @db.Uuid
+  clientId         String?
+  createdAt        DateTime      @default(now())
+  deliveredAt      DateTime?
+  hiddenAt         DateTime?
+  conversation     Conversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender           User          @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  attachment       UploadedFile? @relation(fields: [attachmentFileId], references: [id], onDelete: SetNull)
+
+  @@unique([conversationId, senderId, clientId])
+  @@index([conversationId, createdAt])
+}
+
+model Block {
+  blockerId String   @db.Uuid
+  blockedId String   @db.Uuid
+  createdAt DateTime @default(now())
+  blocker   User     @relation("Blocker", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked   User     @relation("Blocked", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  @@id([blockerId, blockedId])
+}
+
+model Notification {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @db.Uuid
+  type      String
+  title     String
+  body      String
+  link      String?
+  readAt    DateTime?
+  emailedAt DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt, createdAt])
+}
+
+model NotificationPreference {
+  userId String  @db.Uuid
+  type   String
+  email  Boolean @default(true)
+  push   Boolean @default(false)
+  inApp  Boolean @default(true)
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, type])
+}
+
+model PushSubscription {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+/// Outgoing e-mails (dev adapter stores them here; SMTP adapter also logs status)
+model OutboxEmail {
+  id        String    @id @default(uuid()) @db.Uuid
+  to        String
+  subject   String
+  text      String
+  sentAt    DateTime?
+  error     String?
+  createdAt DateTime  @default(now())
+}
+
+model Review {
+  id               String         @id @default(uuid()) @db.Uuid
+  mediationEventId String         @db.Uuid
+  authorId         String         @db.Uuid
+  subjectId        String         @db.Uuid
+  rating           Int
+  text             String         @default("")
+  status           ReviewStatus   @default(VISIBLE)
+  createdAt        DateTime       @default(now())
+  mediationEvent   MediationEvent @relation(fields: [mediationEventId], references: [id], onDelete: Restrict)
+  author           User           @relation("ReviewAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  subject          User           @relation("ReviewSubject", fields: [subjectId], references: [id], onDelete: Cascade)
+
+  @@unique([mediationEventId, authorId])
+  @@index([subjectId, status])
+}
+
+model Report {
+  id          String       @id @default(uuid()) @db.Uuid
+  reporterId  String       @db.Uuid
+  targetType  ReportTarget
+  targetId    String       @db.Uuid
+  reason      String
+  details     String       @default("")
+  status      ReportStatus @default(OPEN)
+  handledById String?      @db.Uuid
+  handledAt   DateTime?
+  resolution  String?
+  createdAt   DateTime     @default(now())
+  reporter    User         @relation("Reporter", fields: [reporterId], references: [id], onDelete: Cascade)
+
+  @@unique([reporterId, targetType, targetId])
+  @@index([status, createdAt])
+}
+
+model AuditLog {
+  id         String   @id @default(uuid()) @db.Uuid
+  actorId    String?  @db.Uuid
+  action     String
+  entityType String
+  entityId   String?
+  data       Json     @default("{}")
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([actorId, createdAt])
+}
+
+model Consent {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String?  @db.Uuid
+  type      String
+  version   String
+  granted   Boolean
+  createdAt DateTime @default(now())
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type])
+}
+
+model UploadedFile {
+  id             String                @id @default(uuid()) @db.Uuid
+  ownerId        String                @db.Uuid
+  purpose        FilePurpose
+  storageKey     String                @unique
+  originalName   String
+  mimeType       String
+  sizeBytes      Int
+  sha256         String
+  scanStatus     ScanStatus            @default(PENDING)
+  createdAt      DateTime              @default(now())
+  deletedAt      DateTime?
+  owner          User                  @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  applicationDocs ApplicationDocument[]
+  messages       Message[]
+  qualificationProofs ResumeQualification[]
+
+  @@index([ownerId, purpose])
+}
+
+model AiUsage {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String?  @db.Uuid
+  clientKey String
+  provider  String
+  inputTokens  Int   @default(0)
+  outputTokens Int   @default(0)
+  createdAt DateTime @default(now())
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([clientKey, createdAt])
+}

@@ -1,0 +1,36 @@
+{
+  "name": "myminijob",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "dev": "turbo run dev --parallel",
+    "build": "turbo run build",
+    "typecheck": "turbo run typecheck",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "test:e2e": "pnpm --filter @myminijob/web test:e2e",
+    "db:generate": "pnpm --filter @myminijob/db generate",
+    "db:migrate": "pnpm --filter @myminijob/db migrate",
+    "db:seed": "pnpm --filter @myminijob/db seed",
+    "db:reset": "pnpm --filter @myminijob/db reset",
+    "setup": "pnpm install && pnpm db:generate && pnpm db:migrate && pnpm db:seed"
+  },
+  "devDependencies": {
+    "turbo": "2.11.10",
+    "typescript": "5.9.3"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@node-rs/argon2",
+      "esbuild",
+      "sharp",
+      "@prisma/engines",
+      "prisma",
+      "unrs-resolver"
+    ]
+  }
+}

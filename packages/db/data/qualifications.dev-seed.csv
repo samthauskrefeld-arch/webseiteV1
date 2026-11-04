@@ -1,0 +1,175 @@
+kind;name;official;aliases
+AUSBILDUNGSBERUF;Elektroniker/-in – Fachrichtung Energie- und Gebäudetechnik;1;Elektriker:COLLOQUIAL|Elektroinstallateur:SYNONYM|Elektroniker Energie- und Gebäudetechnik:SPELLING|EGT:ABBREVIATION
+AUSBILDUNGSBERUF;Elektroniker/-in – Fachrichtung Automatisierungs- und Systemtechnik;1;Elektroniker Automatisierung:SPELLING
+AUSBILDUNGSBERUF;Elektroniker/-in für Betriebstechnik;1;Betriebselektriker:COLLOQUIAL
+AUSBILDUNGSBERUF;Elektroniker/-in für Automatisierungstechnik;1;
+AUSBILDUNGSBERUF;Elektroniker/-in für Geräte und Systeme;1;
+AUSBILDUNGSBERUF;Elektroniker/-in für Gebäudesystemintegration;1;
+AUSBILDUNGSBERUF;Elektroniker/-in für Informations- und Systemtechnik;1;
+AUSBILDUNGSBERUF;Elektroniker/-in für Maschinen und Antriebstechnik;1;
+AUSBILDUNGSBERUF;Elektroanlagenmonteur/-in;1;
+AUSBILDUNGSBERUF;Mechatroniker/-in;1;
+AUSBILDUNGSBERUF;Kraftfahrzeugmechatroniker/-in;1;Kfz-Mechatroniker:ABBREVIATION|Kfz-Mechaniker:COLLOQUIAL|Automechaniker:COLLOQUIAL
+AUSBILDUNGSBERUF;Land- und Baumaschinenmechatroniker/-in;1;
+AUSBILDUNGSBERUF;Zweiradmechatroniker/-in;1;Fahrradmechaniker:COLLOQUIAL
+AUSBILDUNGSBERUF;Industriemechaniker/-in;1;
+AUSBILDUNGSBERUF;Zerspanungsmechaniker/-in;1;Dreher:COLLOQUIAL|Fräser:COLLOQUIAL
+AUSBILDUNGSBERUF;Anlagenmechaniker/-in für Sanitär-, Heizungs- und Klimatechnik;1;SHK:ABBREVIATION|Installateur:COLLOQUIAL|Heizungsbauer:COLLOQUIAL|Klempner:COLLOQUIAL
+AUSBILDUNGSBERUF;Metallbauer/-in;1;Schlosser:COLLOQUIAL
+AUSBILDUNGSBERUF;Tischler/-in;1;Schreiner:SYNONYM
+AUSBILDUNGSBERUF;Maler/-in und Lackierer/-in;1;Maler:COLLOQUIAL|Lackierer:COLLOQUIAL
+AUSBILDUNGSBERUF;Maurer/-in;1;
+AUSBILDUNGSBERUF;Dachdecker/-in;1;
+AUSBILDUNGSBERUF;Zimmerer/Zimmerin;1;Zimmermann:SYNONYM
+AUSBILDUNGSBERUF;Fliesen-, Platten- und Mosaikleger/-in;1;Fliesenleger:COLLOQUIAL
+AUSBILDUNGSBERUF;Glaser/-in;1;
+AUSBILDUNGSBERUF;Raumausstatter/-in;1;
+AUSBILDUNGSBERUF;Straßenbauer/-in;1;
+AUSBILDUNGSBERUF;Hochbaufacharbeiter/-in;1;
+AUSBILDUNGSBERUF;Tiefbaufacharbeiter/-in;1;
+AUSBILDUNGSBERUF;Gärtner/-in – Fachrichtung Garten- und Landschaftsbau;1;Landschaftsgärtner:COLLOQUIAL|GaLaBau:ABBREVIATION|Gärtner GaLaBau:SPELLING
+AUSBILDUNGSBERUF;Gärtner/-in – Fachrichtung Zierpflanzenbau;1;
+AUSBILDUNGSBERUF;Florist/-in;1;Blumenbinder:SYNONYM
+AUSBILDUNGSBERUF;Forstwirt/-in;1;
+AUSBILDUNGSBERUF;Landwirt/-in;1;
+AUSBILDUNGSBERUF;Koch/Köchin;1;Koch:SPELLING|Köchin:SPELLING
+AUSBILDUNGSBERUF;Fachmann/-frau für Restaurants und Veranstaltungsgastronomie;1;Restaurantfachmann:SYNONYM|Restaurantfachfrau:SYNONYM
+AUSBILDUNGSBERUF;Hotelfachmann/-frau;1;Hotelfachfrau:SPELLING
+AUSBILDUNGSBERUF;Fachkraft für Gastronomie;1;
+AUSBILDUNGSBERUF;Bäcker/-in;1;
+AUSBILDUNGSBERUF;Konditor/-in;1;
+AUSBILDUNGSBERUF;Fleischer/-in;1;Metzger:SYNONYM|Schlachter:SYNONYM
+AUSBILDUNGSBERUF;Verkäufer/-in;1;
+AUSBILDUNGSBERUF;Kaufmann/-frau im Einzelhandel;1;Einzelhandelskaufmann:SYNONYM|Einzelhandelskauffrau:SYNONYM
+AUSBILDUNGSBERUF;Kaufmann/-frau für Büromanagement;1;Bürokaufmann:SYNONYM|Bürokauffrau:SYNONYM|Kauffrau für Büromanagement:SPELLING
+AUSBILDUNGSBERUF;Industriekaufmann/-frau;1;Industriekauffrau:SPELLING
+AUSBILDUNGSBERUF;Kaufmann/-frau im Groß- und Außenhandelsmanagement;1;Großhandelskaufmann:SYNONYM
+AUSBILDUNGSBERUF;Bankkaufmann/-frau;1;Bankkauffrau:SPELLING
+AUSBILDUNGSBERUF;Kaufmann/-frau für Versicherungen und Finanzanlagen;1;Versicherungskaufmann:SYNONYM
+AUSBILDUNGSBERUF;Immobilienkaufmann/-frau;1;
+AUSBILDUNGSBERUF;Kaufmann/-frau für Spedition und Logistikdienstleistung;1;Speditionskaufmann:SYNONYM
+AUSBILDUNGSBERUF;Kaufmann/-frau für Tourismus und Freizeit;1;
+AUSBILDUNGSBERUF;Veranstaltungskaufmann/-frau;1;Eventmanager:COLLOQUIAL
+AUSBILDUNGSBERUF;Steuerfachangestellte/-r;1;Steuerfachangestellter:SPELLING
+AUSBILDUNGSBERUF;Medizinische/-r Fachangestellte/-r;1;MFA:ABBREVIATION|Arzthelferin:COLLOQUIAL|Arzthelfer:COLLOQUIAL
+AUSBILDUNGSBERUF;Zahnmedizinische/-r Fachangestellte/-r;1;ZFA:ABBREVIATION|Zahnarzthelferin:COLLOQUIAL
+AUSBILDUNGSBERUF;Tiermedizinische/-r Fachangestellte/-r;1;TFA:ABBREVIATION|Tierarzthelferin:COLLOQUIAL
+AUSBILDUNGSBERUF;Pharmazeutisch-kaufmännische/-r Angestellte/-r;1;PKA:ABBREVIATION
+AUSBILDUNGSBERUF;Pflegefachmann/-frau;1;Pflegefachkraft:SYNONYM|Krankenpfleger:COLLOQUIAL|Altenpfleger:COLLOQUIAL
+AUSBILDUNGSBERUF;Notfallsanitäter/-in;1;Rettungssanitäter:COLLOQUIAL
+AUSBILDUNGSBERUF;Physiotherapeut/-in;1;Krankengymnast:SYNONYM
+AUSBILDUNGSBERUF;Ergotherapeut/-in;1;
+AUSBILDUNGSBERUF;Erzieher/-in (staatlich anerkannt);1;Erzieher:SPELLING|Erzieherin:SPELLING
+AUSBILDUNGSBERUF;Kinderpfleger/-in (staatlich geprüft);1;
+AUSBILDUNGSBERUF;Sozialassistent/-in (staatlich geprüft);1;
+AUSBILDUNGSBERUF;Fachinformatiker/-in – Fachrichtung Anwendungsentwicklung;1;FIAE:ABBREVIATION|Anwendungsentwickler:COLLOQUIAL
+AUSBILDUNGSBERUF;Fachinformatiker/-in – Fachrichtung Systemintegration;1;FISI:ABBREVIATION|Systemintegrator:COLLOQUIAL
+AUSBILDUNGSBERUF;Fachinformatiker/-in – Fachrichtung Daten- und Prozessanalyse;1;
+AUSBILDUNGSBERUF;Fachinformatiker/-in – Fachrichtung Digitale Vernetzung;1;
+AUSBILDUNGSBERUF;Kaufmann/-frau für IT-System-Management;1;IT-Kaufmann:COLLOQUIAL
+AUSBILDUNGSBERUF;Mediengestalter/-in Digital und Print;1;Mediengestalter:SPELLING|Grafiker:COLLOQUIAL
+AUSBILDUNGSBERUF;Fachkraft für Veranstaltungstechnik;1;Veranstaltungstechniker:COLLOQUIAL
+AUSBILDUNGSBERUF;Fachkraft für Lagerlogistik;1;Lagerist:COLLOQUIAL
+AUSBILDUNGSBERUF;Fachlagerist/-in;1;
+AUSBILDUNGSBERUF;Berufskraftfahrer/-in;1;LKW-Fahrer:COLLOQUIAL|Busfahrer:COLLOQUIAL
+AUSBILDUNGSBERUF;Fachkraft für Schutz und Sicherheit;1;
+AUSBILDUNGSBERUF;Gebäudereiniger/-in;1;
+AUSBILDUNGSBERUF;Hauswirtschafter/-in;1;
+AUSBILDUNGSBERUF;Friseur/-in;1;Frisör:SPELLING|Friseurin:SPELLING
+AUSBILDUNGSBERUF;Kosmetiker/-in;1;
+AUSBILDUNGSBERUF;Augenoptiker/-in;1;Optiker:COLLOQUIAL
+AUSBILDUNGSBERUF;Chemikant/-in;1;
+AUSBILDUNGSBERUF;Chemielaborant/-in;1;Laborant:COLLOQUIAL
+STUDIENFACH;Betriebswirtschaftslehre;0;BWL:ABBREVIATION|Betriebswirtschaft:SYNONYM|Business Administration:SYNONYM
+STUDIENFACH;Volkswirtschaftslehre;0;VWL:ABBREVIATION|Economics:SYNONYM
+STUDIENFACH;Wirtschaftsinformatik;0;WInf:ABBREVIATION
+STUDIENFACH;Wirtschaftsingenieurwesen;0;WiIng:ABBREVIATION
+STUDIENFACH;Wirtschaftsrecht;0;
+STUDIENFACH;International Business;0;
+STUDIENFACH;Tourismusmanagement;0;
+STUDIENFACH;Informatik;0;Computer Science:SYNONYM
+STUDIENFACH;Data Science;0;Datenwissenschaft:SYNONYM
+STUDIENFACH;Maschinenbau;0;
+STUDIENFACH;Elektrotechnik;0;E-Technik:ABBREVIATION|Elektro- und Informationstechnik:SYNONYM
+STUDIENFACH;Mechatronik;0;
+STUDIENFACH;Bauingenieurwesen;0;Bauing:ABBREVIATION
+STUDIENFACH;Architektur;0;
+STUDIENFACH;Landschaftsarchitektur;0;
+STUDIENFACH;Rechtswissenschaft;0;Jura:COLLOQUIAL|Jus:COLLOQUIAL
+STUDIENFACH;Humanmedizin;0;Medizin:SYNONYM
+STUDIENFACH;Zahnmedizin;0;
+STUDIENFACH;Pharmazie;0;
+STUDIENFACH;Psychologie;0;
+STUDIENFACH;Soziale Arbeit;0;Sozialpädagogik:SYNONYM|Sozialwesen:SYNONYM
+STUDIENFACH;Lehramt;0;
+STUDIENFACH;Erziehungswissenschaft;0;Pädagogik:SYNONYM
+STUDIENFACH;Germanistik;0;
+STUDIENFACH;Anglistik;0;
+STUDIENFACH;Geschichte;0;
+STUDIENFACH;Mathematik;0;Mathe:COLLOQUIAL
+STUDIENFACH;Physik;0;
+STUDIENFACH;Chemie;0;
+STUDIENFACH;Biologie;0;Bio:COLLOQUIAL
+STUDIENFACH;Medienwissenschaft;0;Kommunikationswissenschaft:SYNONYM
+STUDIENFACH;Kommunikationsdesign;0;Grafikdesign:SYNONYM
+STUDIENFACH;Sportwissenschaft;0;Sport:COLLOQUIAL
+STUDIENFACH;Pflegewissenschaft;0;
+STUDIENFACH;Agrarwissenschaften;0;
+STUDIENFACH;Lebensmitteltechnologie;0;
+MEISTER_FORTBILDUNG;Elektrotechnikermeister/-in;1;Elektromeister:COLLOQUIAL
+MEISTER_FORTBILDUNG;Installateur- und Heizungsbauermeister/-in;1;SHK-Meister:COLLOQUIAL
+MEISTER_FORTBILDUNG;Kraftfahrzeugtechnikermeister/-in;1;Kfz-Meister:COLLOQUIAL
+MEISTER_FORTBILDUNG;Tischlermeister/-in;1;Schreinermeister:SYNONYM
+MEISTER_FORTBILDUNG;Maler- und Lackierermeister/-in;1;Malermeister:COLLOQUIAL
+MEISTER_FORTBILDUNG;Maurer- und Betonbauermeister/-in;1;Maurermeister:COLLOQUIAL
+MEISTER_FORTBILDUNG;Dachdeckermeister/-in;1;
+MEISTER_FORTBILDUNG;Metallbauermeister/-in;1;
+MEISTER_FORTBILDUNG;Friseurmeister/-in;1;
+MEISTER_FORTBILDUNG;Bäckermeister/-in;1;
+MEISTER_FORTBILDUNG;Konditormeister/-in;1;
+MEISTER_FORTBILDUNG;Fleischermeister/-in;1;Metzgermeister:SYNONYM
+MEISTER_FORTBILDUNG;Gärtnermeister/-in;1;
+MEISTER_FORTBILDUNG;Geprüfte/-r Küchenmeister/-in;1;Küchenmeister:SPELLING
+MEISTER_FORTBILDUNG;Geprüfte/-r Industriemeister/-in – Fachrichtung Metall;1;Industriemeister Metall:SPELLING
+MEISTER_FORTBILDUNG;Geprüfte/-r Industriemeister/-in – Fachrichtung Elektrotechnik;1;Industriemeister Elektro:SPELLING
+MEISTER_FORTBILDUNG;Geprüfte/-r Handelsfachwirt/-in;1;
+MEISTER_FORTBILDUNG;Geprüfte/-r Wirtschaftsfachwirt/-in;1;
+MEISTER_FORTBILDUNG;Geprüfte/-r Fachwirt/-in im Gastgewerbe;1;
+MEISTER_FORTBILDUNG;Geprüfte/-r Bilanzbuchhalter/-in;1;Bilanzbuchhalter:SPELLING
+MEISTER_FORTBILDUNG;Staatlich geprüfte/-r Techniker/-in – Fachrichtung Elektrotechnik;1;Elektrotechniker:COLLOQUIAL
+MEISTER_FORTBILDUNG;Staatlich geprüfte/-r Techniker/-in – Fachrichtung Maschinentechnik;1;Maschinenbautechniker:COLLOQUIAL
+MEISTER_FORTBILDUNG;Staatlich geprüfte/-r Betriebswirt/-in;1;
+ZERTIFIKAT;Führerschein Klasse B;0;Autoführerschein:COLLOQUIAL|PKW-Führerschein:SYNONYM
+ZERTIFIKAT;Führerschein Klasse BE;0;Anhängerführerschein:COLLOQUIAL
+ZERTIFIKAT;Führerschein Klasse C/CE;0;LKW-Führerschein:COLLOQUIAL
+ZERTIFIKAT;Fahrausweis für Flurförderzeuge;0;Staplerschein:COLLOQUIAL|Gabelstaplerschein:COLLOQUIAL
+ZERTIFIKAT;Erste-Hilfe-Kurs;0;Erste Hilfe:SPELLING
+ZERTIFIKAT;Belehrung nach § 43 Infektionsschutzgesetz;0;Gesundheitszeugnis:COLLOQUIAL|Rote Karte:COLLOQUIAL|IfSG-Belehrung:ABBREVIATION
+ZERTIFIKAT;Erweitertes Führungszeugnis;0;
+ZERTIFIKAT;Ausbildereignung (AEVO);0;Ausbilderschein:COLLOQUIAL|AdA-Schein:COLLOQUIAL
+ZERTIFIKAT;Sachkundeprüfung nach § 34a GewO;0;34a:ABBREVIATION|Bewacherschein:COLLOQUIAL
+ZERTIFIKAT;Elektrofachkraft für festgelegte Tätigkeiten;0;EFKffT:ABBREVIATION
+ZERTIFIKAT;Schweißerprüfung nach DIN EN ISO 9606-1;0;Schweißerschein:COLLOQUIAL
+ZERTIFIKAT;Deutsch-Sprachzertifikat (GER B1 oder höher);0;Goethe-Zertifikat:SYNONYM|telc Deutsch:SYNONYM
+ZERTIFIKAT;Englisch-Sprachzertifikat (GER B2 oder höher);0;Cambridge Certificate:SYNONYM|TOEFL:SYNONYM|IELTS:SYNONYM
+ZERTIFIKAT;Deutsches Rettungsschwimmabzeichen Silber;0;Rettungsschwimmer:COLLOQUIAL
+ZERTIFIKAT;Lebensmittelhygiene-Schulung (HACCP);0;HACCP:ABBREVIATION|Hygieneschulung:SYNONYM
+ZERTIFIKAT;Motorsägen-Lehrgang (Modul A);0;Motorsägenschein:COLLOQUIAL|Kettensägenschein:COLLOQUIAL
+ZERTIFIKAT;Übungsleiter-Lizenz C;0;Trainerschein:COLLOQUIAL
+ZERTIFIKAT;Fahrerlaubnis zur Fahrgastbeförderung;0;P-Schein:COLLOQUIAL|Personenbeförderungsschein:SYNONYM
+BERUF;Gartenhelfer/-in;0;Gartenhilfe:SYNONYM
+BERUF;Haushaltshilfe;0;Putzhilfe:COLLOQUIAL
+BERUF;Reinigungskraft;0;
+BERUF;Servicekraft;0;Kellner:SYNONYM|Kellnerin:SYNONYM|Bedienung:COLLOQUIAL
+BERUF;Küchenhilfe;0;Spülkraft:SYNONYM
+BERUF;Aushilfe im Verkauf;0;Verkaufshilfe:SYNONYM
+BERUF;Nachhilfelehrer/-in;0;Nachhilfe:COLLOQUIAL
+BERUF;Babysitter/-in;0;Kinderbetreuung:SYNONYM
+BERUF;Umzugshelfer/-in;0;Möbelpacker:SYNONYM
+BERUF;Lagerhelfer/-in;0;Lagerarbeiter:SYNONYM
+BERUF;Bürohilfe;0;Büroaushilfe:SYNONYM
+BERUF;Eventhelfer/-in;0;Veranstaltungshelfer:SYNONYM
+BERUF;Kurierfahrer/-in;0;Fahrradkurier:SYNONYM
+BERUF;Hausmeister/-in;0;Hauswart:SYNONYM
+BERUF;Promoter/-in;0;
+BERUF;Seniorenbetreuer/-in;0;Alltagsbegleiter:SYNONYM

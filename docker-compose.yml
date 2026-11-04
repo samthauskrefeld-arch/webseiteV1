@@ -1,0 +1,49 @@
+# Local infrastructure for My Minijob.
+#   docker compose up -d            -> Postgres, Redis, MinIO (S3), Mailpit (SMTP + Web UI)
+#   docker compose --profile scan up -d   -> additionally ClamAV for upload scanning
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: myminijob
+      POSTGRES_PASSWORD: myminijob
+      POSTGRES_DB: myminijob
+    ports: ["5432:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U myminijob"]
+      interval: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: myminijob
+      MINIO_ROOT_PASSWORD: myminijob-secret
+    ports: ["9000:9000", "9001:9001"]
+    volumes: [miniodata:/data]
+
+  minio-init:
+    image: minio/mc:latest
+    depends_on: [minio]
+    entrypoint: >
+      /bin/sh -c "sleep 3; mc alias set local http://minio:9000 myminijob myminijob-secret &&
+      mc mb -p local/myminijob-private && mc anonymous set none local/myminijob-private"
+
+  mailpit:
+    image: axllent/mailpit:latest
+    ports: ["1025:1025", "8025:8025"]
+
+  clamav:
+    image: clamav/clamav:stable
+    profiles: ["scan"]
+    ports: ["3310:3310"]
+
+volumes:
+  pgdata:
+  miniodata:

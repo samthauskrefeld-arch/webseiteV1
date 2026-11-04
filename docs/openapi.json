@@ -1,0 +1,4292 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "My Minijob API",
+    "version": "1.0.0",
+    "description": "Versionierte REST-API. Mutierende Anfragen benötigen den Header x-mmj-csrf: 1."
+  },
+  "servers": [
+    {
+      "url": "/api/v1"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "session": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "mmj_session"
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "fields": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "SearchQuery": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "GARTEN",
+              "HAUSHALT",
+              "EINKAUF",
+              "NACHHILFE",
+              "EVENT",
+              "GASTRONOMIE",
+              "BUERO",
+              "HANDWERK",
+              "BETREUUNG",
+              "LOGISTIK",
+              "IT",
+              "SONSTIGES"
+            ]
+          },
+          "location": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "radiusKm": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 300
+          },
+          "minHourlyCents": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100000
+          },
+          "employmentTypes": {
+            "maxItems": 9,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "MINIJOB",
+                "TEILZEIT",
+                "VOLLZEIT",
+                "BEFRISTET",
+                "EINMALIG",
+                "PROJEKT",
+                "AUSBILDUNG",
+                "PRAKTIKUM",
+                "WERKSTUDENT"
+              ]
+            }
+          },
+          "weekend": {
+            "type": "boolean"
+          },
+          "evening": {
+            "type": "boolean"
+          },
+          "remote": {
+            "type": "boolean"
+          },
+          "qualificationTerms": {
+            "maxItems": 5,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 80
+            }
+          },
+          "qualificationKind": {
+            "type": "string",
+            "enum": [
+              "AUSBILDUNGSBERUF",
+              "BERUF",
+              "STUDIENFACH",
+              "MEISTER_FORTBILDUNG",
+              "ZERTIFIKAT"
+            ]
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "paths": {
+    "/auth/register": {
+      "post": {
+        "summary": "Konto registrieren (setzt Session-Cookie)",
+        "tags": [
+          "Auth"
+        ],
+        "parameters": [
+          {
+            "name": "x-mmj-csrf",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "maxLength": 254,
+                    "format": "email",
+                    "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 10,
+                    "maxLength": 200
+                  },
+                  "username": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 30,
+                    "pattern": "^[a-zA-Z0-9äöüÄÖÜß._-]+$"
+                  },
+                  "acceptTerms": {
+                    "type": "boolean",
+                    "const": true
+                  },
+                  "initialRole": {
+                    "default": "APPLICANT",
+                    "type": "string",
+                    "enum": [
+                      "APPLICANT",
+                      "PRIVATE_POSTER",
+                      "BUSINESS_POSTER"
+                    ]
+                  }
+                },
+                "required": [
+                  "email",
+                  "password",
+                  "username",
+                  "acceptTerms"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "summary": "Anmelden",
+        "tags": [
+          "Auth"
+        ],
+        "parameters": [
+          {
+            "name": "x-mmj-csrf",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "maxLength": 254,
+                    "format": "email",
+                    "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  }
+                },
+                "required": [
+                  "email",
+                  "password"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "summary": "Abmelden",
+        "tags": [
+          "Auth"
+        ],
+        "parameters": [
+          {
+            "name": "x-mmj-csrf",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/verify-email": {
+      "post": {
+        "summary": "E-Mail bestätigen",
+        "tags": [
+          "Auth"
+        ],
+        "parameters": [
+          {
+            "name": "x-mmj-csrf",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string",
+                    "minLength": 20,
+                    "maxLength": 200
+                  }
+                },
+                "required": [
+                  "token"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/resend-verification": {
+      "post": {
+        "summary": "Bestätigungsmail erneut senden",
+        "tags": [
+          "Auth"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "x-mmj-csrf",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/password-reset/request": {
+      "post": {
+        "summary": "Passwort-Reset anfordern",
+        "tags": [
+          "Auth"
+        ],
+        "parameters": [
+          {
+            "name": "x-mmj-csrf",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "maxLength": 254,
+                    "format": "email",
+                    "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+                  }
+                },
+                "required": [
+                  "email"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/password-reset/confirm": {
+      "post": {
+        "summary": "Neues Passwort setzen",
+        "tags": [
+          "Auth"
+        ],
+        "parameters": [
+          {
+            "name": "x-mmj-csrf",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string",
+                    "minLength": 20,
+                    "maxLength": 200
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 10,
+                    "maxLength": 200
+                  }
+                },
+                "required": [
+                  "token",
+                  "password"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me": {
+      "get": {
+        "summary": "Aktuelle Person",
+        "tags": [
+          "Konto"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Konto löschen (DSGVO Art. 17)",
+        "tags": [
+          "Konto"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "x-mmj-csrf",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "type": "object",
+                "properties": {
+                  "password": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "confirm": {
+                    "type": "string",
+                    "const": "LÖSCHEN"
+                  }
+                },
+                "required": [
+                  "password",
+                  "confirm"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/role": {
+      "patch": {
+        "summary": "Aktive Rolle wechseln",
+        "tags": [
+          "Konto"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "x-mmj-csrf",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "type": "object",
+                "properties": {
+                  "role": {
+                    "type": "string",
+                    "enum": [
+                      "APPLICANT",
+                      "PRIVATE_POSTER",
+                      "BUSINESS_POSTER"
+                    ]
+                  }
+                },
+                "required": [
+                  "role"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/profile": {
+      "get": {
+        "summary": "Eigenes Profil und Lebenslauf",
+        "tags": [
+          "Profil"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Profil speichern",
+        "tags": [
+          "Profil"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "x-mmj-csrf",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 30,
+                    "pattern": "^[a-zA-Z0-9äöüÄÖÜß._-]+$"
+                  },
+                  "city": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 80
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "postalCode": {
+                    "anyOf": [
+                      {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "pattern": "^\\d{5}$"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "const": ""
+                      }
+                    ]
+                  },
+                  "about": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 1500
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "skills": {
+                    "default": [],
+                    "maxItems": 30,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 60
+                    }
+                  },
+                  "languages": {
+                    "default": [],
+                    "maxItems": 15,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 40
+                        },
+                        "level": {
+                          "type": "string",
+                          "enum": [
+                            "A1",
+                            "A2",
+                            "B1",
+                            "B2",
+                            "C1",
+                            "C2",
+                            "MUTTERSPRACHE"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "level"
+                      ]
+                    }
+                  },
+                  "availability": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 500
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "desiredHourlyCents": {
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 100000
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "visibility": {
+                    "default": {},
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string",
+                      "enum": [
+                        "region",
+                        "experience",
+                        "education",
+                        "qualifications",
+                        "languages",
+                        "availability",
+                        "desiredWage",
+                        "documents"
+                      ]
+                    },
+                    "additionalProperties": {
+                      "type": "string",
+                      "enum": [
+                        "PUBLIC",
+                        "APPLICATIONS",
+                        "PRIVATE"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "username"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/resume": {
+      "put": {
+        "summary": "Lebenslauf speichern",
+        "tags": [
+          "Profil"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "x-mmj-csrf",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "type": "object",
+                "properties": {
+                  "headline": {
+                    "default": "",
+                    "type": "string",
+                    "maxLength": 160
+                  },
+                  "summary": {
+                    "default": "",
+                    "type": "string",
+                    "maxLength": 3000
+                  },
+                  "experience": {
+                    "default": [],
+                    "maxItems": 30,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "title": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 120
+                        },
+                        "organization": {
+                          "default": "",
+                          "type": "string",
+                          "maxLength": 120
+                        },
+                        "from": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "pattern": "^\\d{4}(-\\d{2})?$"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "to": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "pattern": "^\\d{4}(-\\d{2})?$"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "description": {
+                          "default": "",
+                          "type": "string",
+                          "maxLength": 1500
+                        }
+                      },
+                      "required": [
+                        "title"
+                      ]
+                    }
+                  },
+                  "education": {
+                    "default": [],
+                    "maxItems": 20,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "title": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 160
+                        },
+                        "institution": {
+                          "default": "",
+                          "type": "string",
+                          "maxLength": 160
+                        },
+                        "from": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "pattern": "^\\d{4}(-\\d{2})?$"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "to": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "pattern": "^\\d{4}(-\\d{2})?$"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "qualificationId": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "format": "uuid",
+                              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "title"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/resume/qualifications": {
+      "post": {
+        "summary": "Qualifikation aus Katalog hinzufügen (Selbstangabe)",
+        "tags": [
+          "Profil"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "x-mmj-csrf",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "type": "object",
+                "properties": {
+                  "qualificationId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "note": {
+                    "default": "",
+                    "type": "string",
+                    "maxLength": 300
+                  },
+                  "documentFileId": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "qualificationId"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/resume/qualifications/{id}": {
+      "delete": {
+        "summary": "Qualifikation entfernen",
+        "tags": [
+          "Profil"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-mmj-csrf",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/export": {
+      "get": {
+        "summary": "Datenexport (DSGVO Art. 15/20)",
+        "tags": [
+          "Konto"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/qualifications": {
+      "get": {
+        "summary": "Katalog-Autocomplete (?q=&kinds=)",
+        "tags": [
+          "Katalog"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/qualifications/{id}": {
+      "get": {
+        "summary": "Qualifikation mit Aliasen",
+        "tags": [
+          "Katalog"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/places": {
+      "get": {
+        "summary": "Orts-Autocomplete (?q=)",
+        "tags": [
+          "Katalog"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/search": {
+      "get": {
+        "summary": "Suche (?q= natürliche Sprache | ?filters= JSON SearchQuery)",
+        "tags": [
+          "Suche"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/search/parse": {
+      "post": {
+        "summary": "Natürliche Sprache → SearchQuery",
+        "tags": [
+          "Suche"
+        ],
+        "parameters": [
+          {
+            "name": "x-mmj-csrf",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "type": "object",
+                "properties": {
+                  "q": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "q"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/listings": {
+      "get": {
+        "summary": "Neueste veröffentlichte Inserate",
+        "tags": [
+          "Inserate"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Inserat anlegen (Entwurf)",
+        "tags": [
+          "Inserate"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "x-mmj-csrf",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "type": "object",
+                "properties": {
+                  "posterType": {
+                    "type": "string",
+                    "enum": [
+                      "PRIVATE",
+                      "BUSINESS"
+                    ]
+                  },
+                  "title": {
+                    "type": "string",
+                    "minLength": 5,
+                    "maxLength": 120
+                  },
+                  "description": {
+                    "type": "string",
+                    "minLength": 20,
+                    "maxLength": 8000
+                  },
+                  "category": {
+                    "type": "string",
+                    "enum": [
+                      "GARTEN",
+                      "HAUSHALT",
+                      "EINKAUF",
+                      "NACHHILFE",
+                      "EVENT",
+                      "GASTRONOMIE",
+                      "BUERO",
+                      "HANDWERK",
+                      "BETREUUNG",
+                      "LOGISTIK",
+                      "IT",
+                      "SONSTIGES"
+                    ]
+                  },
+                  "employmentType": {
+                    "type": "string",
+                    "enum": [
+                      "MINIJOB",
+                      "TEILZEIT",
+                      "VOLLZEIT",
+                      "BEFRISTET",
+                      "EINMALIG",
+                      "PROJEKT",
+                      "AUSBILDUNG",
+                      "PRAKTIKUM",
+                      "WERKSTUDENT"
+                    ]
+                  },
+                  "remote": {
+                    "default": false,
+                    "type": "boolean"
+                  },
+                  "city": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 80
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "postalCode": {
+                    "anyOf": [
+                      {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "pattern": "^\\d{5}$"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "const": ""
+                      }
+                    ]
+                  },
+                  "startDate": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "endDate": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "hoursPerWeek": {
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "minimum": 0.5,
+                        "maximum": 60
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "hoursTotal": {
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "minimum": 0.5,
+                        "maximum": 2000
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "scheduleText": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 500
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "weekend": {
+                    "default": false,
+                    "type": "boolean"
+                  },
+                  "evening": {
+                    "default": false,
+                    "type": "boolean"
+                  },
+                  "positions": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 50
+                  },
+                  "hourlyWageCents": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100000
+                  },
+                  "compensationNotes": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 1000
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "paymentMethod": {
+                    "type": "string",
+                    "enum": [
+                      "BANK_TRANSFER",
+                      "PAYPAL",
+                      "OTHER_CASHLESS"
+                    ]
+                  },
+                  "paymentNotes": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 500
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "requirements": {
+                    "default": [],
+                    "maxItems": 20,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "AUSBILDUNG",
+                            "STUDIUM",
+                            "MEISTER",
+                            "ZERTIFIKAT",
+                            "ERFAHRUNG",
+                            "FAEHIGKEIT",
+                            "SPRACHE",
+                            "FUEHRERSCHEIN"
+                          ]
+                        },
+                        "level": {
+                          "type": "string",
+                          "enum": [
+                            "REQUIRED",
+                            "PREFERRED"
+                          ]
+                        },
+                        "qualificationId": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "format": "uuid",
+                              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "text": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "maxLength": 200
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "level"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "posterType",
+                  "title",
+                  "description",
+                  "category",
+                  "employmentType",
+                  "positions",
+                  "hourlyWageCents",
+                  "paymentMethod"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/listings/{id}": {
+      "get": {
+        "summary": "Inserat",
+        "tags": [
+          "Inserate"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Inserat bearbeiten",
+        "tags": [
+          "Inserate"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-mmj-csrf",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "type": "object",
+                "properties": {
+                  "posterType": {
+                    "type": "string",
+                    "enum": [
+                      "PRIVATE",
+                      "BUSINESS"
+                    ]
+                  },
+                  "title": {
+                    "type": "string",
+                    "minLength": 5,
+                    "maxLength": 120
+                  },
+                  "description": {
+                    "type": "string",
+                    "minLength": 20,
+                    "maxLength": 8000
+                  },
+                  "category": {
+                    "type": "string",
+                    "enum": [
+                      "GARTEN",
+                      "HAUSHALT",
+                      "EINKAUF",
+                      "NACHHILFE",
+                      "EVENT",
+                      "GASTRONOMIE",
+                      "BUERO",
+                      "HANDWERK",
+                      "BETREUUNG",
+                      "LOGISTIK",
+                      "IT",
+                      "SONSTIGES"
+                    ]
+                  },
+                  "employmentType": {
+                    "type": "string",
+                    "enum": [
+                      "MINIJOB",
+                      "TEILZEIT",
+                      "VOLLZEIT",
+                      "BEFRISTET",
+                      "EINMALIG",
+                      "PROJEKT",
+                      "AUSBILDUNG",
+                      "PRAKTIKUM",
+                      "WERKSTUDENT"
+                    ]
+                  },
+                  "remote": {
+                    "default": false,
+                    "type": "boolean"
+                  },
+                  "city": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 80
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "postalCode": {
+                    "anyOf": [
+                      {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "pattern": "^\\d{5}$"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "const": ""
+                      }
+                    ]
+                  },
+                  "startDate": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "endDate": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "hoursPerWeek": {
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "minimum": 0.5,
+                        "maximum": 60
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "hoursTotal": {
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "minimum": 0.5,
+                        "maximum": 2000
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "scheduleText": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 500
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "weekend": {
+                    "default": false,
+                    "type": "boolean"
+                  },
+                  "evening": {
+                    "default": false,
+                    "type": "boolean"
+                  },
+                  "positions": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 50
+                  },
+                  "hourlyWageCents": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100000
+                  },
+                  "compensationNotes": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 1000
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "paymentMethod": {
+                    "type": "string",
+                    "enum": [
+                      "BANK_TRANSFER",
+                      "PAYPAL",
+                      "OTHER_CASHLESS"
+                    ]
+                  },
+                  "paymentNotes": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 500
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "requirements": {
+                    "default": [],
+                    "maxItems": 20,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "AUSBILDUNG",
+                            "STUDIUM",
+                            "MEISTER",
+                            "ZERTIFIKAT",
+                            "ERFAHRUNG",
+                            "FAEHIGKEIT",
+                            "SPRACHE",
+                            "FUEHRERSCHEIN"
+                          ]
+                        },
+                        "level": {
+                          "type": "string",
+                          "enum": [
+                            "REQUIRED",
+                            "PREFERRED"
+                          ]
+                        },
+                        "qualificationId": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "format": "uuid",
+                              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "text": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "maxLength": 200
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "level"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "posterType",
+                  "title",
+                  "description",
+                  "category",
+                  "employmentType",
+                  "positions",
+                  "hourlyWageCents",
+                  "paymentMethod"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/listings/{id}/status": {
+      "post": {
+        "summary": "Veröffentlichen/Pausieren/Fortsetzen/Schließen/Archivieren",
+        "tags": [
+          "Inserate"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-mmj-csrf",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "type": "object",
+                "properties": {
+                  "action": {
+                    "type": "string",
+                    "enum": [
+                      "publish",
+                      "pause",
+                      "resume",
+                      "close",
+                      "archive"
+                    ]
+                  }
+                },
+                "required": [
+                  "action"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/listings": {
+      "get": {
+        "summary": "Eigene Inserate",
+        "tags": [
+          "Inserate"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/listings/{id}/applications": {
+      "post": {
+        "summary": "Bewerben (genau einmal)",
+        "tags": [
+          "Bewerbungen"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-mmj-csrf",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "type": "object",
+                "properties": {
+                  "message": {
+                    "default": "",
+                    "type": "string",
+                    "maxLength": 2000
+                  },
+                  "documentFileIds": {
+                    "default": [],
+                    "maxItems": 5,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "Bewerbungen zum eigenen Inserat",
+        "tags": [
+          "Bewerbungen"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/applications": {
+      "get": {
+        "summary": "Eigene Bewerbungen",
+        "tags": [
+          "Bewerbungen"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/applications/{id}": {
+      "get": {
+        "summary": "Bewerbung (Bewerber oder Inseratsteller)",
+        "tags": [
+          "Bewerbungen"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/applications/{id}/withdraw": {
+      "post": {
+        "summary": "Bewerbung zurückziehen",
+        "tags": [
+          "Bewerbungen"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-mmj-csrf",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/applications/{id}/shortlist": {
+      "post": {
+        "summary": "Engere Wahl",
+        "tags": [
+          "Bewerbungen"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-mmj-csrf",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/applications/{id}/reject": {
+      "post": {
+        "summary": "Absagen",
+        "tags": [
+          "Bewerbungen"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-mmj-csrf",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "type": "object",
+                "properties": {
+                  "note": {
+                    "default": "",
+                    "type": "string",
+                    "maxLength": 500
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/applications/{id}/accept": {
+      "post": {
+        "summary": "Zahlungspflichtig zusagen (Gebührenhinweis bestätigt)",
+        "tags": [
+          "Vermittlung"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-mmj-csrf",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "type": "object",
+                "properties": {
+                  "feeAcknowledged": {
+                    "type": "boolean",
+                    "const": true
+                  },
+                  "feeNoticeVersion": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 40
+                  }
+                },
+                "required": [
+                  "feeAcknowledged",
+                  "feeNoticeVersion"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/offers": {
+      "get": {
+        "summary": "Erhaltene Zusagen",
+        "tags": [
+          "Vermittlung"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/mediations/{id}/respond": {
+      "post": {
+        "summary": "Zusage annehmen/ablehnen (Annahme = Gebührenereignis)",
+        "tags": [
+          "Vermittlung"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-mmj-csrf",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "type": "object",
+                "properties": {
+                  "accept": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "accept"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/mediations/{id}/withdraw": {
+      "post": {
+        "summary": "Offene Zusage zurücknehmen (keine Gebühr)",
+        "tags": [
+          "Vermittlung"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-mmj-csrf",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/mediations/{id}/complete": {
+      "post": {
+        "summary": "Auftrag als erledigt markieren",
+        "tags": [
+          "Vermittlung"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-mmj-csrf",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/mediations/{id}/dispute": {
+      "post": {
+        "summary": "Storno/Streitfall eröffnen",
+        "tags": [
+          "Vermittlung"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-mmj-csrf",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "type": "object",
+                "properties": {
+                  "reason": {
+                    "type": "string",
+                    "minLength": 10,
+                    "maxLength": 1500
+                  }
+                },
+                "required": [
+                  "reason"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/mediations/{id}/reviews": {
+      "post": {
+        "summary": "Bewertung abgeben (nach Abschluss)",
+        "tags": [
+          "Bewertungen"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-mmj-csrf",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "type": "object",
+                "properties": {
+                  "rating": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 5
+                  },
+                  "text": {
+                    "default": "",
+                    "type": "string",
+                    "maxLength": 1500
+                  }
+                },
+                "required": [
+                  "rating"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/invoices": {
+      "get": {
+        "summary": "Eigene Rechnungen",
+        "tags": [
+          "Rechnungen"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/invoices/{id}": {
+      "get": {
+        "summary": "Rechnung",
+        "tags": [
+          "Rechnungen"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/invoices/{id}/pdf": {
+      "get": {
+        "summary": "Rechnung als PDF",
+        "tags": [
+          "Rechnungen"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/invoices/{id}/xml": {
+      "get": {
+        "summary": "E-Rechnung (UBL/XRechnung-Entwurf)",
+        "tags": [
+          "Rechnungen"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/invoices/{id}/pay": {
+      "post": {
+        "summary": "Rechnung bezahlen (nur Testadapter)",
+        "tags": [
+          "Rechnungen"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-mmj-csrf",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/billing-address": {
+      "get": {
+        "summary": "Rechnungsadresse",
+        "tags": [
+          "Rechnungen"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Rechnungsadresse speichern",
+        "tags": [
+          "Rechnungen"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "x-mmj-csrf",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 160
+                  },
+                  "street": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 120
+                  },
+                  "postalCode": {
+                    "type": "string",
+                    "pattern": "^\\d{5}$"
+                  },
+                  "city": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 80
+                  }
+                },
+                "required": [
+                  "name",
+                  "street",
+                  "postalCode",
+                  "city"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/files": {
+      "post": {
+        "summary": "Datei hochladen (multipart: file, purpose)",
+        "tags": [
+          "Dateien"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "x-mmj-csrf",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/files": {
+      "get": {
+        "summary": "Eigene Dateien",
+        "tags": [
+          "Dateien"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/files/{id}": {
+      "get": {
+        "summary": "Autorisierter Download",
+        "tags": [
+          "Dateien"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Datei löschen",
+        "tags": [
+          "Dateien"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-mmj-csrf",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/conversations": {
+      "get": {
+        "summary": "Unterhaltungen",
+        "tags": [
+          "Chat"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/conversations/{id}/messages": {
+      "get": {
+        "summary": "Nachrichten (?after=)",
+        "tags": [
+          "Chat"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Nachricht senden (Idempotency-Key = clientId)",
+        "tags": [
+          "Chat"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-mmj-csrf",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "type": "object",
+                "properties": {
+                  "body": {
+                    "default": "",
+                    "type": "string",
+                    "maxLength": 4000
+                  },
+                  "attachmentFileId": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/conversations/{id}/read": {
+      "post": {
+        "summary": "Als gelesen markieren",
+        "tags": [
+          "Chat"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-mmj-csrf",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/conversations/{id}": {
+      "patch": {
+        "summary": "Lesebestätigungen ein/aus",
+        "tags": [
+          "Chat"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-mmj-csrf",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "type": "object",
+                "properties": {
+                  "shareReadReceipts": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "shareReadReceipts"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{id}/block": {
+      "post": {
+        "summary": "Person blockieren",
+        "tags": [
+          "Chat"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-mmj-csrf",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Blockierung aufheben",
+        "tags": [
+          "Chat"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-mmj-csrf",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/profiles/{username}": {
+      "get": {
+        "summary": "Öffentliches Profil",
+        "tags": [
+          "Profil"
+        ],
+        "parameters": [
+          {
+            "name": "username",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/notifications": {
+      "get": {
+        "summary": "Benachrichtigungen",
+        "tags": [
+          "Benachrichtigungen"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Als gelesen markieren",
+        "tags": [
+          "Benachrichtigungen"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "x-mmj-csrf",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/notification-preferences": {
+      "get": {
+        "summary": "Präferenzen",
+        "tags": [
+          "Benachrichtigungen"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Präferenzen speichern",
+        "tags": [
+          "Benachrichtigungen"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "x-mmj-csrf",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "type": "object",
+                "properties": {
+                  "prefs": {
+                    "maxItems": 20,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "APPLICATION_RECEIVED",
+                            "APPLICATION_STATUS",
+                            "OFFER_RECEIVED",
+                            "OFFER_RESPONSE",
+                            "MESSAGE",
+                            "INVOICE",
+                            "REVIEW",
+                            "SYSTEM"
+                          ]
+                        },
+                        "email": {
+                          "type": "boolean"
+                        },
+                        "push": {
+                          "type": "boolean"
+                        },
+                        "inApp": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "email",
+                        "push",
+                        "inApp"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "prefs"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reports": {
+      "post": {
+        "summary": "Inhalt melden",
+        "tags": [
+          "Moderation"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "x-mmj-csrf",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "type": "object",
+                "properties": {
+                  "targetType": {
+                    "type": "string",
+                    "enum": [
+                      "LISTING",
+                      "USER",
+                      "MESSAGE",
+                      "REVIEW"
+                    ]
+                  },
+                  "targetId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "reason": {
+                    "type": "string",
+                    "enum": [
+                      "SPAM",
+                      "BETRUG",
+                      "BELEIDIGUNG",
+                      "DISKRIMINIERUNG",
+                      "ILLEGAL",
+                      "FALSCHE_ANGABEN",
+                      "SONSTIGES"
+                    ]
+                  },
+                  "details": {
+                    "default": "",
+                    "type": "string",
+                    "maxLength": 1500
+                  }
+                },
+                "required": [
+                  "targetType",
+                  "targetId",
+                  "reason"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/business": {
+      "get": {
+        "summary": "Unternehmensprofil",
+        "tags": [
+          "Unternehmen"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Unternehmensprofil speichern",
+        "tags": [
+          "Unternehmen"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "x-mmj-csrf",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 160
+                  },
+                  "legalForm": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 60
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "street": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 120
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "postalCode": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "pattern": "^\\d{5}$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "city": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 80
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "vatId": {
+                    "anyOf": [
+                      {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "pattern": "^DE\\d{9}$"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "const": ""
+                      }
+                    ]
+                  },
+                  "website": {
+                    "anyOf": [
+                      {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "maxLength": 200,
+                            "format": "uri"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "const": ""
+                      }
+                    ]
+                  },
+                  "description": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 2000
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "name"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/business/verification": {
+      "post": {
+        "summary": "Verifizierung beantragen",
+        "tags": [
+          "Unternehmen"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "x-mmj-csrf",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ai/chat": {
+      "post": {
+        "summary": "My Minijob AI (nur lesende Tools)",
+        "tags": [
+          "KI"
+        ],
+        "parameters": [
+          {
+            "name": "x-mmj-csrf",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "type": "object",
+                "properties": {
+                  "messages": {
+                    "minItems": 1,
+                    "maxItems": 20,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "role": {
+                          "type": "string",
+                          "enum": [
+                            "user",
+                            "assistant"
+                          ]
+                        },
+                        "content": {
+                          "type": "string",
+                          "maxLength": 2000
+                        }
+                      },
+                      "required": [
+                        "role",
+                        "content"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "messages"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/overview": {
+      "get": {
+        "summary": "Moderations-Übersicht",
+        "tags": [
+          "Admin"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Fehler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
